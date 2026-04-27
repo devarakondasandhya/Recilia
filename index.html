@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartCook - Recipe Generator</title>
+  <!-- Tailwind CSS via CDN for utility classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide icons via local or cdn -> FontAwesome as a quick substitute or use SVG inject -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Our Custom Base Styles -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(210 20% 92%)',
+            background: 'hsl(210 20% 98%)',
+            foreground: 'hsl(200 15% 20%)',
+            card: 'hsl(0 0% 100%)',
+            primary: {
+              DEFAULT: 'hsl(0 80% 63%)',
+              foreground: 'hsl(0 0% 100%)',
+            },
+            muted: {
+              DEFAULT: 'hsl(210 20% 96%)',
+              foreground: 'hsl(200 10% 45%)',
+            },
+            destructive: {
+              DEFAULT: 'hsl(0 84.2% 60.2%)',
+              foreground: 'hsl(0 0% 100%)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-background text-foreground">
+
+  <!-- Navbar -->
+  <nav class="glass-surface sticky top-0 z-50 px-6 py-4 md:px-12">
+    <div class="flex items-center justify-between max-w-7xl mx-auto">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-utensils text-primary text-xl"></i>
+        <h1 class="text-xl font-bold text-primary">SmartCook</h1>
+        <span class="text-sm font-semibold opacity-70">| The Smart Recipe Generator</span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <button id="nav-btn-favorites"
+          class="text-sm font-semibold text-muted-foreground hover:text-primary hidden">Favorites</button>
+        <button id="nav-btn-home" class="text-sm font-semibold text-primary">Home</button>
+
+        <!-- Auth Status Container -->
+        <div id="auth-status-container" class="flex flex-center gap-2">
+          <!-- Will be toggled via JS -->
+          <button id="btn-login-modal"
+            class="text-sm font-semibold bg-primary text-white px-4 py-2 rounded-lg">Login</button>
+          <button id="btn-signup-modal"
+            class="text-sm font-semibold border border-primary text-primary px-4 py-2 rounded-lg">Sign Up</button>
+        </div>
+
+        <div id="user-info-container" class="hidden flex items-center gap-3">
+          <span id="nav-username" class="text-sm font-medium">Hi, User</span>
+          <button id="btn-logout" class="p-2 rounded-full hover:bg-muted text-foreground"><i
+              class="fa-solid fa-arrow-right-from-bracket"></i></button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Views Container -->
+  <main id="app-container">
+
+    <!-- Auth View -->
+    <section id="view-auth"
+      class="hidden animate-fade-in max-w-md mx-auto mt-16 bg-card p-8 rounded-2xl shadow-lg border border-border">
+      <h2 id="auth-title" class="text-2xl font-bold text-center mb-6">Welcome Back</h2>
+
+      <div id="auth-username-container" class="mb-4 hidden">
+        <input type="text" id="auth-username" placeholder="Username"
+          class="w-full px-4 py-3 rounded-lg border border-border outline-none transition-colors">
+      </div>
+
+      <div class="mb-4">
+        <input type="email" id="auth-email" placeholder="Email"
+          class="w-full px-4 py-3 rounded-lg border border-border outline-none transition-colors">
+      </div>
+
+      <div class="mb-6">
+        <input type="password" id="auth-password" placeholder="Password"
+          class="w-full px-4 py-3 rounded-lg border border-border outline-none transition-colors">
+      </div>
+
+      <button id="auth-submit" class="btn-search-primary w-full py-3 text-base">Login</button>
+
+      <p class="text-center mt-4 text-sm text-muted-foreground">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <button id="auth-toggle-btn" class="text-primary font-semibold hover:underline">Sign Up</button>
+      </p>
+    </section>
+
+    <!-- Home View -->
+    <section id="view-home" class="flex">
+
+      <!-- Filter Sidebar -->
+      <aside
+        class="bg-card w-[320px] fixed top-0 left-0 pt-24 p-6 flex flex-col border-r border-border h-screen overflow-y-auto">
+        <div class="mb-4 pb-4 border-b border-border">
+          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-gear"></i> Filters</h3>
+        </div>
+
+        <div class="flex flex-col gap-5">
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Meal Type</label>
+            <select id="filter-meal" class="filter-select">
+              <option value="any">Any</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snacks">Snacks</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Cuisine</label>
+            <select id="filter-cuisine" class="filter-select">
+              <option value="any">Any</option>
+              <option value="South Indian">South Indian</option>
+              <option value="North Indian">North Indian</option>
+              <option value="Chinese">Chinese</option>
+              <option value="Italian">Italian</option>
+              <option value="Mexican">Mexican</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Dietary</label>
+            <select id="filter-dietary" class="filter-select">
+              <option value="any">Any</option>
+              <option value="Veg">Veg</option>
+              <option value="Non-veg">Non-veg</option>
+              <option value="Vegan">Vegan</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Difficulty</label>
+            <select id="filter-difficulty" class="filter-select">
+              <option value="any">Any</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Cook Time (mins)</label>
+            <input type="number" id="filter-time" class="filter-select" placeholder="e.g. 30">
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Calories</label>
+            <select id="filter-calories" class="filter-select">
+              <option value="any">Any</option>
+              <option value="Low">Low (&lt; 400 kcal)</option>
+              <option value="Medium">Medium (400-700 kcal)</option>
+              <option value="High">High (&gt; 700 kcal)</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-foreground">Allergies /
+              Restrictions</label>
+            <input type="text" id="filter-allergies" class="filter-select" placeholder="e.g. peanuts, dairy">
+          </div>
+
+          <button id="filter-reset"
+            class="mt-4 w-full py-3 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors border-t border-border">Reset
+            All</button>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="ml-[320px] flex-1 p-8 md:p-12 flex flex-col items-center min-h-screen">
+
+        <!-- Search Hero -->
+        <div
+          class="bg-card rounded-3xl shadow-lg p-8 md:p-12 mb-8 max-w-[1000px] w-full border border-border animate-fade-in">
+          <div class="text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">Find Your Next Meal</h2>
+            <p class="text-muted-foreground mb-8">Enter ingredients to find recipes.</p>
+
+            <div class="max-w-[700px] mx-auto text-left">
+              <div class="search-input-bar">
+                <input type="text" id="search-input"
+                  class="flex-1 bg-transparent border-none outline-none px-4 py-3 text-foreground placeholder-muted-foreground"
+                  placeholder="Enter ingredients (tomato, onion, chilli)...">
+
+                <button id="search-btn-clear"
+                  class="p-2 text-muted-foreground hover:text-primary transition-colors hidden"><i
+                    class="fa-solid fa-xmark"></i></button>
+
+                <button id="search-btn-submit"
+                  class="bg-primary hover:bg-primary-dark transition-colors text-white w-10 h-10 rounded-full flex items-center justify-center ml-2 shadow-sm shrink-0"><i
+                    class="fa-solid fa-magnifying-glass"></i></button>
+              </div>
+              <div id="search-loading-text" class="text-primary mt-2 hidden text-center">Processing...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Grid Area -->
+        <div class="w-full max-w-[1100px]">
+          <div id="loading-spinner" class="hidden flex justify-center py-12 text-primary text-4xl">
+            <i class="fa-solid fa-spinner animate-spin"></i>
+          </div>
+
+          <div id="empty-state" class="text-center py-16 text-muted-foreground">
+            <span class="text-5xl mb-4 block">🍽️</span>
+            <p class="text-lg">Start searching for delicious recipes!</p>
+          </div>
+
+          <div id="recipe-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
+            <!-- Recipe Cards Generated Here -->
+          </div>
+
+          <div class="flex justify-center mt-8">
+            <button id="btn-show-more"
+              class="hidden px-6 py-3 rounded-full border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-white transition-colors">Show
+              More</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Favorites View -->
+    <section id="view-favorites" class="hidden max-w-[1200px] mx-auto p-8 animate-fade-in pt-12">
+      <div class="text-center mb-10 py-8 rounded-3xl"
+        style="background: linear-gradient(to right, transparent, hsl(0 80% 63% / 0.05), transparent)">
+        <h2 class="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-heart text-destructive"></i> Your Favorite Recipes
+        </h2>
+        <p class="text-muted-foreground text-lg">All your saved culinary inspirations in one place.</p>
+      </div>
+
+      <div id="favorites-empty-state"
+        class="text-center py-16 bg-card rounded-3xl shadow-sm border border-border max-w-md mx-auto hidden">
+        <i class="fa-solid fa-heart-crack text-5xl text-primary/20 mb-6 block w-full"></i>
+        <p class="text-lg mb-6">You haven't saved any favorites yet.</p>
+        <button id="btn-browse-recipes" class="btn-search-primary">Browse Recipes</button>
+      </div>
+
+      <div id="favorites-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+    </section>
+  </main>
+
+  <!-- Recipe Modal Window -->
+  <div id="recipe-modal" class="modal-overlay hidden">
+    <div class="bg-card rounded-2xl w-[90%] max-w-[600px] max-h-[90vh] overflow-y-auto p-8 relative shadow-xl">
+      <button id="modal-close" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><i
+          class="fa-solid fa-xmark text-xl"></i></button>
+
+      <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-primary">
+        <h2 id="modal-title" class="text-xl font-bold pr-8">Recipe Name</h2>
+        <select id="modal-lang-select"
+          class="bg-muted rounded-full px-3 py-1.5 text-sm font-semibold outline-none cursor-pointer">
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="te">Telugu</option>
+        </select>
+      </div>
+
+      <div class="flex justify-around rounded-2xl p-6 mb-6 border border-border bg-muted">
+        <div class="text-center"><span id="lbl-cals"
+            class="block text-xs uppercase text-muted-foreground mb-1">Calories</span><b id="modal-cals"
+            class="text-primary">500 kcal</b></div>
+        <div class="text-center"><span id="lbl-pro"
+            class="block text-xs uppercase text-muted-foreground mb-1">Protein</span><b id="modal-protein"
+            class="text-primary">20g</b></div>
+        <div class="text-center"><span id="lbl-carbs"
+            class="block text-xs uppercase text-muted-foreground mb-1">Carbs</span><b id="modal-carbs"
+            class="text-primary">50g</b></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 bg-muted p-4 rounded-xl mb-6 border border-border text-sm">
+        <div class="flex flex-col"><span id="lbl-cui" class="text-muted-foreground font-semibold">Cuisine</span> <span
+            id="modal-cuisine" class="font-medium">Global</span></div>
+        <div class="flex flex-col"><span id="lbl-diff" class="text-muted-foreground font-semibold">Difficulty</span>
+          <span id="modal-difficulty" class="font-medium">Easy</span>
+        </div>
+        <div class="flex flex-col"><span id="lbl-time" class="text-muted-foreground font-semibold">Time</span> <span
+            id="modal-time" class="font-medium">30 mins</span></div>
+      </div>
+
+      <h3 id="lbl-ing" class="text-lg font-bold mb-3">📝 Ingredients</h3>
+      <ul id="modal-ingredients" class="list-disc list-inside mb-6 space-y-1"></ul>
+
+      <h3 id="lbl-steps" class="text-lg font-bold mb-3">🍳 Instructions</h3>
+      <ol id="modal-steps" class="list-decimal list-inside mb-6 space-y-2"></ol>
+    </div>
+  </div>
+
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <!-- Firebase Auth/Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+
+  <!-- Vanilla JS Files -->
+  <script src="/js/firebaseApp.js?v=3"></script>
+  <script src="/js/api.js?v=3"></script>
+  <script src="/js/auth.js?v=3"></script>
+  <script src="/js/app.js?v=3"></script>
+</body>
+
+</html>
