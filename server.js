@@ -6,23 +6,18 @@ const Groq = require('groq-sdk');
 
 dotenv.config();
 
-
-
-const path = require("path");
-app.use(express.static(path.join(__dirname, "frontend")));
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "index.html"));
-});
-
-
-
 const app = express();
+
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Serve frontend (IMPORTANT for Railway)
+app.use(express.static(path.join(__dirname, 'frontend')));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
 app.post('/api/generate-recipes', async (req, res) => {
     try {
         const { ingredients, filters } = req.body;
